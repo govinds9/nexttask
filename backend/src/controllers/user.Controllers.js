@@ -97,5 +97,9 @@ const LoginUser  = async (req,res)=>{
 
 }
 
+const Auth = async(req,res)=>{
+    return res.json({user:req.user})
+}
 
-export {registerUser,LoginUser}
+
+export {registerUser,LoginUser,Auth}
