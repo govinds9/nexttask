@@ -1,7 +1,8 @@
 import { User } from "../model/user.model.js";
 
 import jwt from "jsonwebtoken"
-import fs from 'fs'
+import fs, { stat } from 'fs'
+import { Task } from "../model/task.madel.js";
 
 
 
@@ -97,9 +98,89 @@ const LoginUser  = async (req,res)=>{
 
 }
 
-const Auth = async(req,res)=>{
-    return res.json({user:req.user})
+
+
+const logOutUser = async(req,res)=>{
+    const userId = req.user._id
+    await User.findByIdAndUpdate(userId,{
+        $unset:{
+          refreshtoken:1
+        }
+      },{
+        new:true
+      })
+  
+    const options = {
+      httpOnly:true,
+      secure:true
+    }
+
+    return res.status(200).clearCookie("refreshtoken",options).json({
+        status:200,
+        message:"Logout Successfully"
+    })
 }
 
 
-export {registerUser,LoginUser,Auth}
+
+const creatTask = async (req,res)=>{
+const user = req.user;
+const {title,status,description,priority,deadline} =req.body
+if([title,status,priority].some((field)=>field?.trim()==="")){
+    return  res.status(401).json({
+        status:401,
+        message:"title status and priority are required"
+    })
+}
+
+const task = await Task.create({
+    title,
+    status,
+    description:description|| undefined,
+    deadline:deadline|| undefined,
+    priority,
+    user:user._id
+
+})
+
+const newtask = await Task.findById(task._id)
+if(!newtask) {
+    return res.status(500).json({
+        status:500,
+        message:"Something went wrong while creating task"
+    })
+}
+
+return res.status(200).json({
+    status:200,
+    message:"task created Successfully",
+    data:newtask
+
+})
+
+
+}
+
+const getAlltask = async(req,res)=>{
+    
+
+    const allTask = await Task.find({
+        user:req.user._id
+    })
+    if(!allTask){
+        return res.status(500).json({
+            status:500,
+            message:"something went wrong while fetching task"
+        })
+    }
+
+
+    res.status(200).json({
+        status:200,
+        message:'fetched all task',
+        data:allTask
+    })
+}
+
+
+export {registerUser,LoginUser,logOutUser,creatTask, getAlltask}
