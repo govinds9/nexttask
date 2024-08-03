@@ -8,7 +8,7 @@ const verifyJwt = async (req,res,next)=>{
     if(!token){
         return res.status(401).json({
             status:401,
-            message:"Unauthorized User"
+            message:"Unauthorized User please Relogin"
         })
     }
     const decode = await jwt.verify(token,process.env.REFRESH_TOKEN_SECRET)
@@ -16,7 +16,7 @@ const verifyJwt = async (req,res,next)=>{
     if(!user){
         return res.status(401).json({
             status:401,
-            message:"Invalid Access token"
+            message:"Invalid Access token please relogin"
         })
     }
     req.user = user

@@ -6,9 +6,16 @@ import { Task } from "../model/task.madel.js";
 
 
 const registerUser = async (req,res)=>{
+    
     try {
         
         const {name, email,password} = req.body
+        if(!name || !email ||!password){
+            return  res.status(400).json({
+                status:400,
+                message:"All fields are required"
+            })
+        }
     
         if([name,email,password].some((field)=>field?.trim()==="")){
            return  res.status(400).json({
@@ -18,8 +25,7 @@ const registerUser = async (req,res)=>{
         }
     
         const exitUser = await User.findOne({email})
-        const temp = await User.find()
-        console.log(temp)
+      
         if(exitUser){
           return  res.status(400).json({
                 status:400,
@@ -27,7 +33,7 @@ const registerUser = async (req,res)=>{
             })
         }
         const newUser = await User.create({
-            name:name.toLowerCase(),
+            name:name,
             email,
             password
         })
@@ -47,6 +53,7 @@ const registerUser = async (req,res)=>{
             user:createdUser
         })
     } catch (error) {
+        console.log(error)
         return res.status(500).json({
             status:500,
             message:"Internal Error"
@@ -61,7 +68,7 @@ const LoginUser  = async (req,res)=>{
     try {
         
         const {email,password} = req.body
-        if(!(email || password)){
+        if(!(email && password)){
             return res.status(400).json({
                 status:400,
                 message:"All fields are required"
