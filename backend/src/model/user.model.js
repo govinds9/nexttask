@@ -44,10 +44,23 @@ userSchema.pre("save", async function (next) {
 userSchema.methods.ispasswordCorrect = async function (password) {
     return await bcrypt.compareSync(password, this.password);
   };
-
-  userSchema.methods.generateRefreshToken = async function () {
+   userSchema.methods.generateAccesstoken =  function () {
+    return  jwt.sign(
+      {
+        _id: this._id,
+        email: this.email,
+        name: this.name,
+        
+    },
+    process.env.ACCESS_TOKEN_SECRET,
+    {
+        expiresIn: process.env.ACCESS_TOKEN_EXPIRY
+    }
+    )
+   }
+  userSchema.methods.generateRefreshToken =  function () {
     // console.log("Refresh token")
-    return await jwt.sign(
+    return  jwt.sign(
       {
         _id: this._id,
       },

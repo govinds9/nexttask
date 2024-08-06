@@ -4,6 +4,7 @@ import {Routes,Route} from 'react-router-dom'
 import Signup from './pages/Signup.jsx'
 import Login from './pages/Login.jsx'
 import Home from './pages/Home.jsx'
+import Protectroute from './router/Protectroute.jsx'
 
 function App() {
   
@@ -16,7 +17,12 @@ function App() {
   <Routes>
     <Route path='/login' element={<Login/>}/>
     <Route  path='/signup' element={<Signup/>} />
-    <Route  path='/' element={<Home/>} />
+    <Route  path='/home' element={
+      <Protectroute>
+      <Home/>
+    </Protectroute>
+    }
+     />
   </Routes>
 
   

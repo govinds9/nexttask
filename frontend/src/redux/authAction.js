@@ -1,4 +1,4 @@
-import {createAsyncThunk} from '@reduxjs/toolkit'
+import { createAsyncThunk} from '@reduxjs/toolkit'
 import Api from '../services/Api.js'
 
 //import {toast} from 'react-toastify'
@@ -41,22 +41,23 @@ try {
     const data = await Api.post('/login',{email,password})
 
     if(data.status<300){
-        console.log(data)
-        alert(data.data.message)
+        localStorage.setItem("accesstoken",data?.data?.accesstoken)
+        alert(data?.data?.message)
        
         
-        return data.data
+        return data?.data
     }
     else{
         alert(data.message)
-        return data.data
+        return data?.data
     }
 } catch (error) {
-    console.log(error)
+    
     if(error.response && error.response.data.message){
         alert(error.response.data.message)
         return rejectWithValue(error.response.data.message)}
         else {
+            alert(error.message)
             
             return rejectWithValue(error.message)
         }
@@ -64,5 +65,52 @@ try {
 }
  })
 
+ const getCurrentUser = createAsyncThunk(
+    "/getuser",
+    async ({},{rejectWithValue})=>{
+        try {
+         
+            const res =await Api.get('/getuser')
+            if(res.status<300 && res.data){
+                return res.data 
+            }
+            
+        } catch (error) {
+            
+        
+            if(error.response && error.response.data.message){
+                alert(error.response.data.message)
+                return rejectWithValue(error.response.data.message)}
+        else {
+            alert(error.message)
+            return  rejectWithValue(error.message)
+        }
+    }
+}
+)
 
- export {userLogin,userRegister}
+const userLogout = createAsyncThunk('/logout',async ({},{rejectWithValue})=>{
+   
+    
+    try {
+        const res = await Api.post('/logout')
+        if(res.status<300){
+            
+            localStorage.removeItem("accesstoken")
+            return res.data
+        }
+    } catch (error) {
+        
+        if(error.response && error.response.data.message){
+            alert(error.response.data.message)
+        return rejectWithValue(error.response.data.message)
+
+        }
+        else {
+            alert(error.message)
+            return  rejectWithValue(error.message)
+        }
+    }
+})
+
+ export {userLogin,userRegister, getCurrentUser, userLogout}

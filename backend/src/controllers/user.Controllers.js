@@ -1,9 +1,26 @@
 import { User } from "../model/user.model.js";
-
+import jwt from 'jsonwebtoken'
 
 import { Task } from "../model/task.madel.js";
 
 
+
+const generateAccessAndRefereshTokens = async(userId) =>{
+    try {
+        const user = await User.findById(userId)
+        const accesstoken = user.generateAccesstoken()
+        const refreshtoken = user.generateRefreshToken()
+
+        user.refreshtoken = refreshtoken
+        await user.save({ validateBeforeSave: false })
+
+        return {accesstoken, refreshtoken}
+
+
+    } catch (error) {
+        throw(error)
+    }
+}
 
 const registerUser = async (req,res)=>{
     
@@ -91,15 +108,8 @@ const LoginUser  = async (req,res)=>{
             })
         }
     
-        const refreshtoken = await user.generateRefreshToken ()
-        if(!refreshtoken){
-            return res.status(500).json({
-                status:500,
-                message:"Something went wrong while login"
-            })
-        }
-        user.refreshtoken = refreshtoken
-      await user.save({validateBeforeSave:false})
+        const {refreshtoken, accesstoken }= await generateAccessAndRefereshTokens(user._id)
+       
       const loginedUser= await User.findById(user._id).select("-password -refreshtoken")
     
      const options = {
@@ -107,12 +117,15 @@ const LoginUser  = async (req,res)=>{
       secure:true
      }
     
-     return res.status(200).cookie("refreshtoken",refreshtoken,options).json({
+     return res.status(200).cookie("refreshtoken",refreshtoken,options).cookie("accesstoken",accesstoken,options).json({
         status:200,
         message:"User Login Successfully",
-        user:loginedUser
+        user:loginedUser,
+        accesstoken,
+        refreshtoken
      })
     } catch (error) {
+        console.log(error)
         return res.status(500).json({
             status:500,
             message:"Internal Error"
@@ -124,7 +137,7 @@ const LoginUser  = async (req,res)=>{
 
 
 const logOutUser = async(req,res)=>{
-
+     
     try {
         
         const userId = req.user._id
@@ -141,11 +154,12 @@ const logOutUser = async(req,res)=>{
           secure:true
         }
     
-        return res.status(200).clearCookie("refreshtoken",options).json({
+        return res.status(200).clearCookie("refreshtoken",options).clearCookie('accesstoken',options).json({
             status:200,
             message:"Logout Successfully"
         })
     } catch (error) {
+       
         return res.status(500).json({
             status:500,
             message:"Internal Error"
@@ -231,5 +245,77 @@ const getAlltask = async(req,res)=>{
    
 }
 
+const getCurrentUser = async (req,res) =>{
+    try {
+        const user = req.user
 
-export {registerUser,LoginUser,logOutUser,creatTask, getAlltask}
+        res.status(200).json({
+            status:200,
+            message:'current user is fetched successfully',
+            user:user
+
+        })
+        
+    } catch (error) {
+        
+    }
+}
+
+
+const refreshAccesstoken = async (req,res)=>{
+    const incomingRefreshtoken = req.cookies?.refreshtoken || req.body?.refreshtoken
+
+    if(!incomingRefreshtoken){
+        return res.status(401).json({
+            status:401,
+            message:"unauthorized request"
+        })
+    }
+    try {
+        const decodtoken = jwt.verify(
+            incomingRefreshtoken,
+            process.env.REFRESH_TOKEN_SECRET
+        )
+
+        const user = await User.findById(decodtoken._id)
+        if(!user){
+            return res.status(401).json({
+                status:401,
+                message:"Invalid refresh token"
+            })
+        }
+
+        if(incomingRefreshtoken!== user?.refreshtoken){
+            return res.status(401).json({
+                status:401,
+                message:"Refreshtoken is expired or Used"
+            })
+        }
+
+        const options = {
+            httpOnly: true,
+            secure: true
+        }
+
+        const {accesstoken,newrefreshtoken } = await generateAccessAndRefereshTokens(user._id)
+    
+
+        return res.status(200).cookie("refreshtoken",newrefreshtoken,options).cookie("accesstoken",accesstoken,options).json({
+            status:200,
+            message:"Acess refresh token refresh",
+            
+            accesstoken,
+            refreshtoken:newrefreshtoken
+         })
+
+
+        
+    } catch (error) {
+        return res.status(500).json({
+            status:500,
+            message:"Something went wrong while refreshing accesstoken"
+        })
+    }
+}
+
+export {registerUser,LoginUser,logOutUser,creatTask, getAlltask, getCurrentUser, refreshAccesstoken}

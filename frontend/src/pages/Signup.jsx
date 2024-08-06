@@ -11,7 +11,7 @@ const Signup = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('') 
   const [show, SetShow] = useState(false)
-
+   
   const handleRegister = ({email,password,name})=>{
     
     if(!validateEmail(email)){
@@ -29,6 +29,7 @@ const Signup = () => {
    
     try {
       store.dispatch(userRegister({email,password,name}))
+
 
       
     } catch (error) {

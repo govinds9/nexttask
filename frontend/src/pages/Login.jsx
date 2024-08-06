@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai'
 import { Link } from 'react-router-dom'
 import Button from '../components/Button'
@@ -31,9 +31,13 @@ const Login = () => {
     }
   }
   const history = useNavigate()
-  if(islogin){
-    history('/',{replace:true})
-  }
+  useEffect(() => {
+
+    if (islogin) {
+      history('/home', { replace: true })
+      
+    }
+  }, [islogin, history])
   return (
     <div   className=' bg-gradient-to-t from-indigo-400 to-slate-50 h-screen w-screen  py-32 flex justify-center'>
     <div className=' h-4/6  w-1/3  bg-slate-100 border-slate-300 border-2  rounded-xl flex flex-col gap-3  px-8 py-10'>
